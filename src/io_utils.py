@@ -1,44 +1,58 @@
-"""CSV load/save helpers for (word, score) pairs.
-The file format is two columns without header: word,score
+"""
+CSV load/save helpers for (word, score) pairs.
+File format: two columns with no header →  word,score
 """
 
-import csv
-# (There should be NO other imports in this file)
+import csv   # no other imports required
+
 
 def load_csv(path):
     """
-    Loads words from a 2-column CSV file.
-    Format: word,score
+    Load a 2-column CSV file and return list of (word, score),
+    where score is parsed as float (defaults to 0.0 if invalid).
     """
-    words = []
+    results = []
+
     try:
-        with open(path, newline='', encoding='utf-8') as f:
-            for row in csv.reader(f):
-                if not row:
+        with open(path, encoding="utf-8", newline="") as fh:
+            reader = csv.reader(fh)
+
+            for row in reader:
+                if not row:     # skip blank rows
                     continue
-                w = row[0].strip().lower()
-                try:
-                    s = float(row[1]) if len(row) > 1 else 0.0
-                except ValueError:
-                    s = 0.0
-                words.append((w, s))
+
+                raw_word = row[0]
+                word = raw_word.strip().lower()
+
+                score = 0.0
+                if len(row) > 1:
+                    try:
+                        score = float(row[1])
+                    except ValueError:
+                        score = 0.0
+
+                results.append((word, score))
+
     except FileNotFoundError:
         print(f"ERROR: File not found at {path}")
-        return [] # Return empty list on error
-    except Exception as e:
-        print(f"ERROR: Could not read {path}. {e}")
-        return [] # Return empty list on error
-    return words
+        return []
+    except Exception as exc:
+        print(f"ERROR: Could not read {path}: {exc}")
+        return []
+
+    return results
+
 
 def save_csv(path, items):
     """
-    Saves a list of (word, score) pairs to a CSV file.
+    Save a list of (word, score) pairs to a CSV file.
+    Overwrites any existing file at the path.
     """
     try:
-        with open(path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            for w, s in items:
-                writer.writerow([w, s])
-    except IOError as e:
-        print(f"ERROR: Could not write to file {path}. {e}")
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            for word, score in items:
+                writer.writerow([word, score])
 
+    except OSError as exc:
+        print(f"ERROR: Could not write to file {path}: {exc}")
